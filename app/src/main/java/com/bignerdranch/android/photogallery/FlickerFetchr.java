@@ -3,6 +3,8 @@ package com.bignerdranch.android.photogallery;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,13 +70,16 @@ public class FlickerFetchr {
 
             String jsonString = getUrlString(url);
             Log.i(TAG, "Received JSON: "+jsonString);
-            JSONObject jsonBody = new JSONObject(jsonString);
+            //JSONObject jsonBody = new JSONObject(jsonString);
 
-            parseItems(items, jsonBody);
+            //parseItems(items, jsonBody);
+            parseItems(items, jsonString);
         }
-        catch(JSONException je){
+
+        /*catch(JSONException je){
             Log.e(TAG, "Failed to prase JSON", je);
-        }
+        }*/
+
         catch (IOException ioe){
             Log.e(TAG, "Failed to fetch items", ioe);
         }
@@ -104,5 +109,28 @@ public class FlickerFetchr {
         }
 
         Log.i(TAG, "Number of photos: "+photosJsonArray.length());
+    }
+
+    private void parseItems(List<GalleryItem> items,  String jsonString){
+        GsonModel gsonModel = new Gson().fromJson(jsonString, GsonModel.class);
+
+
+
+        for(int i = 0; i < gsonModel.getPhotos().getPhoto().length; i++){
+            GsonModel.Photo photoJsonObject = gsonModel.getPhotos().getPhoto()[i];
+
+            GalleryItem item = new GalleryItem();
+            item.setId(photoJsonObject.getId());
+            item.setCaption(photoJsonObject.getUrl_s());
+
+            if(photoJsonObject.getUrl_s() == null){
+                continue;
+            }
+
+            item.setUrl(photoJsonObject.getUrl_s());
+            items.add(item);
+        }
+
+        Log.i(TAG, "Number of photos: "+gsonModel.getPhotos().getPhoto().length);
     }
 }
