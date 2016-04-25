@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ public class PhotoGalleryFragment extends Fragment {
     private RecyclerView mPhotoRecyclerView;
 
     private List<GalleryItem> mItems = new ArrayList<>();
+    private PhotoAdapter mPhotoAdapter;
 
     public static PhotoGalleryFragment newInstance(){
         return new PhotoGalleryFragment();
@@ -32,7 +34,7 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        new FetchItemsTask().execute();
+
     }
 
     @Nullable
@@ -41,32 +43,65 @@ public class PhotoGalleryFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
 
         mPhotoRecyclerView = (RecyclerView) view.findViewById(R.id.fragment_photo_gallery_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+        final GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 3);
+        mPhotoRecyclerView.setLayoutManager(gridLayoutManager);
 
-        setupAdapter();
+        new FetchItemsTask().execute(1, 15);
+
+
+        mPhotoRecyclerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(gridLayoutManager) {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount, int visibleThreshold) {
+                new FetchItemsTask().execute(page, visibleThreshold);
+
+            }
+        });
+
+        //setupAdapter();
+
 
         return view;
     }
 
-    private void setupAdapter(){
+
+
+    private void setupAdapter(int start, int itemCount){
         if(isAdded()){
-            mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
+            if(mPhotoAdapter == null) {
+                mPhotoAdapter = new PhotoAdapter(mItems);
+                mPhotoRecyclerView.setAdapter(mPhotoAdapter);
+            }
+            else{
+                mPhotoAdapter.notifyDataSetChanged();
+                mPhotoAdapter.notifyItemRangeChanged(start, itemCount);
+                Log.i(TAG, "TotalPhotos: "+mPhotoAdapter.getItemCount());
+            }
         }
     }
 
-    private class FetchItemsTask extends AsyncTask<Void, Void, List<GalleryItem>>{
+    private class FetchItemsTask extends AsyncTask<Integer, Void, List<GalleryItem>>{
 
 
 
         @Override
-        protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickerFetchr().fetchItems();
+        protected List<GalleryItem> doInBackground(Integer... params) {
+            if(params.length == 2){
+                int param1 = params[0].intValue();
+                int param2 = params[1].intValue();
+                return new FlickerFetchr().fetchItems(param1, param2);
+            }
+            else{
+                return new FlickerFetchr().fetchItems();
+            }
+
         }
 
         @Override
         protected void onPostExecute(List<GalleryItem> galleryItems) {
-            mItems = galleryItems;
-            setupAdapter();
+            int offset = mItems.size();
+            int newItemsRange = galleryItems.size() - 1;
+            mItems.addAll(galleryItems);
+            setupAdapter(offset, newItemsRange);
         }
     }
 

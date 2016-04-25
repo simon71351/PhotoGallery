@@ -87,6 +87,42 @@ public class FlickerFetchr {
         return items;
     }
 
+    public List<GalleryItem> fetchItems(int offset, int thresholdValue){
+
+        List<GalleryItem> items = new ArrayList<>();
+        try{
+            String url = Uri.parse("https://api.flickr.com/services/rest/")
+                    .buildUpon()
+                    .appendQueryParameter("method", "flickr.photos.getRecent")
+                    .appendQueryParameter("api_key", API_KEY)
+                    .appendQueryParameter("format", "json")
+                    .appendQueryParameter("nojsoncallback", "1")
+                    .appendQueryParameter("extras", "url_s")
+                    .appendQueryParameter("page", String.valueOf(offset))
+                    .appendQueryParameter("per_page", String.valueOf(thresholdValue))
+                    .build().toString();
+
+            String jsonString = getUrlString(url);
+
+            //JSONObject jsonBody = new JSONObject(jsonString);
+
+            //parseItems(items, jsonBody);
+            parseItems(items, jsonString);
+            Log.i(TAG, "Offset: "+offset);
+            Log.i(TAG, "Threshold: "+thresholdValue);
+        }
+
+        /*catch(JSONException je){
+            Log.e(TAG, "Failed to prase JSON", je);
+        }*/
+
+        catch (IOException ioe){
+            Log.e(TAG, "Failed to fetch items", ioe);
+        }
+
+        return items;
+    }
+
     private void parseItems(List<GalleryItem> items,  JSONObject jsonBody)
         throws IOException, JSONException
     {
@@ -108,7 +144,6 @@ public class FlickerFetchr {
             items.add(item);
         }
 
-        Log.i(TAG, "Number of photos: "+photosJsonArray.length());
     }
 
     private void parseItems(List<GalleryItem> items,  String jsonString){
