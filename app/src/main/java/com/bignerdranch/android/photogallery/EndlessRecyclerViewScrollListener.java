@@ -21,9 +21,11 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
     private int previousTotalItemCount = 0;
 
     //True if we are still waiting for the last set of data to load
-    private boolean loading = false;
+    private boolean loading = true;
 
     private int startingPageIndex = 1;
+
+    private int itemsToLoadInOneTime = 100;
 
     RecyclerView.LayoutManager mLayoutManager;
 
@@ -101,16 +103,17 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
         //threshold should reflect how many total columns there are too.
         if(!loading && (lastVisibleItemPosition + visibleThreshold) > totalItemCount){
             currentPage++;
-            onLoadMore(currentPage, totalItemCount, visibleThreshold);
+            onLoadMore(currentPage, itemsToLoadInOneTime);
             loading = true;
             Log.i("ScrollListener", "New Page Loading");
             Log.i("ScrollListener", "Visible Threshold: "+visibleThreshold);
-        }
 
+        }
+        Log.i("ScrollListener", "LastVisibleItemPosition: "+lastVisibleItemPosition);
 
     }
 
-    public abstract void onLoadMore(int page,int totalItemsCount, int visibleThreshold);
+    public abstract void onLoadMore(int page,int itemsToLoadInOneTime);
 
     @Override
     public void onScrollStateChanged(RecyclerView recyclerView, int newState) {

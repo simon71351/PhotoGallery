@@ -46,13 +46,13 @@ public class PhotoGalleryFragment extends Fragment {
         final GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 3);
         mPhotoRecyclerView.setLayoutManager(gridLayoutManager);
 
-        new FetchItemsTask().execute(1, 15);
+        new FetchItemsTask().execute(1, 100);
 
 
         mPhotoRecyclerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(gridLayoutManager) {
             @Override
-            public void onLoadMore(int page, int totalItemsCount, int visibleThreshold) {
-                new FetchItemsTask().execute(page, visibleThreshold);
+            public void onLoadMore(int page, int itemsToLoadInOneTime) {
+                new FetchItemsTask().execute(page, itemsToLoadInOneTime);
 
             }
         });
